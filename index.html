@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIDA BILL - Tính tiền bàn & nước</title>
+<style>
+:root{--navy:#142d45;--blue:#2377b8;--bg:#f2f5f8;--line:#dce3ea;--muted:#657587;--green:#16834b;--red:#c43c3c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font:15px/1.45 system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#172536}
+header{background:var(--navy);color:white;padding:22px max(20px,calc((100% - 1120px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px}
+header h1{margin:0;font-size:26px;letter-spacing:.5px}header p{margin:4px 0 0;color:#c9d8e6;font-size:12px;letter-spacing:1px}
+main{max-width:1120px;margin:22px auto;padding:0 16px}.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab{border:0;border-radius:10px;padding:12px 18px;background:#e1e8ef;color:#26394d;font-weight:700;cursor:pointer}.tab.active{background:#d7eafa;color:#155b91}
+.panel{display:none}.panel.active{display:block}.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:white;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 2px 8px #1b35500a;margin-bottom:16px}
+h2{font-size:17px;margin:0 0 16px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.field label{font-size:13px;font-weight:650;color:#405268}
+input,select{width:100%;border:1px solid #cbd5df;border-radius:9px;padding:11px 12px;background:white;font:inherit;color:#172536;min-width:0}
+.row{display:flex;gap:10px;align-items:end}.row>*{flex:1}.summary{background:#f0f5f9;border-radius:10px;padding:14px;margin-top:12px}.between{display:flex;justify-content:space-between;gap:12px;padding:5px 0}.muted{color:var(--muted);font-size:13px}.big{font-size:25px;font-weight:800;color:var(--green)}
+button{font:inherit;cursor:pointer}.primary{border:0;background:var(--blue);color:white;padding:11px 15px;border-radius:9px;font-weight:700}.green{background:var(--green)}.danger{background:white;color:var(--red);border:1px solid #e5bcbc;padding:8px 11px;border-radius:8px}.soft{background:#eef3f7;color:#26394d;border:0;padding:9px 12px;border-radius:8px}
+.full{width:100%}.items{margin-top:10px}.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #edf0f3}.item:last-child{border:0}.item small{display:block;color:var(--muted)}
+.totalbox{background:var(--navy);color:white;border-radius:14px;padding:20px}.totalbox .muted{color:#c9d8e6}.totalbox .big{color:white;font-size:32px}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.menu-row{border-bottom:1px solid #edf0f3;padding:9px 0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.receipt{white-space:pre-wrap;background:#f7f9fb;border:1px dashed #bdc9d4;padding:18px;border-radius:10px;font-family:ui-monospace,monospace;font-size:14px}
+.note{font-size:12px;color:var(--muted);margin-top:10px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}header{padding:18px}main{margin:14px auto}.menu-grid{grid-template-columns:1fr}.row{align-items:stretch}}
+</style>
+</head>
+<body>
+<header><div><h1>🎱 BIDA BILL</h1><p>PHẦN MỀM TÍNH TIỀN BÀN & NƯỚC</p></div><div>💰</div></header>
+<main>
+<nav class="tabs">
+<button class="tab active" data-tab="bill">🧮 Tính tiền</button>
+<button class="tab" data-tab="menu">🥤 Quản lý menu</button>
+<button class="tab" data-tab="receipt">🧾 Hóa đơn</button>
+</nav>
+<section id="bill" class="panel active">
+<div class="layout">
+<div>
+<div class="card">
+<h2>🕒 1. TÍNH TIỀN BÀN</h2>
+<div class="row">
+<div class="field"><label>🟢 Giờ bắt đầu</label><select id="start"></select></div>
+<div class="field"><label>🔴 Giờ kết thúc</label><select id="end"></select></div>
+</div>
+<div class="field"><label>Giá bàn (đồng/giờ)</label><input id="rate" type="number" min="0" value="25000"></div>
+<div class="field"><label>Giảm giá (đồng)</label><input id="discount" type="number" min="0" value="0"></div>
+<div class="summary">
+<div class="between"><span class="muted">Thời gian chơi</span><b id="duration">1 giờ 0 phút</b></div>
+<div class="between"><span class="muted">Tiền bàn</span><b id="tableCost">25.000đ</b></div>
+</div>
+<p class="note">Nếu giờ kết thúc sớm hơn giờ bắt đầu, hệ thống hiểu là qua ngày hôm sau. Tính tiền chính xác theo phút.</p>
+</div>
+<div class="card">
+<h2>💵 TỔNG THANH TOÁN</h2>
+<div class="between"><span class="muted">Tiền bàn</span><b id="tableLine">25.000đ</b></div>
+<div class="between"><span class="muted">Tiền nước</span><b id="drinkLine">0đ</b></div>
+<div class="between"><span class="muted">Giảm giá</span><b id="discountLine">-0đ</b></div>
+<hr style="border:0;border-top:1px solid #496078;margin:12px 0">
+<div class="big" id="grandTotal">25.000đ</div>
+<button class="primary green full" style="margin-top:14px" onclick="showTab('receipt')">🧾 Xem hóa đơn</button>
+</div>
+</div>
+<div class="card">
+<h2>🥤 2. GỌI NƯỚC</h2>
+<div class="field"><label>Chọn nước trong menu</label><select id="drinkSelect"></select></div>
+<div class="row">
+<div class="field"><label>Số lượng</label><input id="qty" type="number" min="1" step="1" value="1"></div>
+<button class="primary" style="margin-bottom:12px" id="addDrink">＋ Thêm nước</button>
+</div>
+<h3 style="font-size:14px;margin:8px 0">Danh sách nước đã gọi</h3>
+<div id="orderList" class="items"><p class="muted">Chưa có món nước nào.</p></div>
+<div class="between"><b>Tổng tiền nước</b><b id="drinkTotal">0đ</b></div>
+</div>
+</div>
+</section>
+<section id="menu" class="panel">
+<div class="layout">
+<div class="card">
+<h2>➕ Thêm nước mới</h2>
+<div class="field"><label>Tên nước (có thể thêm emoji)</label><input id="newName" placeholder="Ví dụ: Cam ép 🍊"></div>
+<div class="field"><label>Giá bán (đồng)</label><input id="newPrice" type="number" min="0" value="10000"></div>
+<button class="primary full" id="addMenu">＋ Thêm vào menu</button>
+<hr style="border:0;border-top:1px solid #edf0f3;margin:20px 0">
+<h2>✏️ Sửa món nước</h2>
+<div class="field"><label>Chọn món cần sửa</label><select id="editSelect"></select></div>
+<div class="field"><label>Tên mới</label><input id="editName"></div>
+<div class="field"><label>Giá mới (đồng)</label><input id="editPrice" type="number" min="0"></div>
+<div class="row"><button class="primary" id="saveEdit">💾 Lưu sửa</button><button class="danger" id="deleteMenu">🗑 Xóa món</button></div>
+</div>
+<div class="card"><h2>📋 Menu hiện tại <span class="muted" id="menuCount"></span></h2><div id="menuList"></div><p class="note">Các thay đổi menu được lưu tự động trên trình duyệt của máy tính này.</p></div>
+</div>
+</section>
+<section id="receipt" class="panel">
+<div class="card">
+<h2>🧾 HÓA ĐƠN THANH TOÁN</h2>
+<div id="receiptText" class="receipt"></div>
+<div class="row" style="margin-top:14px"><button class="primary" id="copyReceipt">📋 Sao chép hóa đơn</button><button class="danger" id="reset">↻ Làm mới hóa đơn</button></div>
+<p class="note">Làm mới sẽ xóa giờ tính tiền, nước đã gọi và giảm giá. Menu đã chỉnh sửa vẫn được giữ lại.</p>
+</div>
+</section>
+</main>
+<script>
+const defaults=[
+["Trà Đá 🧊",5000],["Nước Suối 💧",5000],["Trà Đường 🥪",10000],["Cafe Đen ☕",10000],["Cafe Sữa ☕",15000],
+["Sting 🥤",10000],["Coca 🥤",10000],["revive⚡",10000],["0 Độ 🍃",10000],["Boncha 🌿",10000],
+["C2 🌿",10000],["Bí Đao",10000],["Đá Me",10000],["247",10000],["🍋 7Up",10000]
+];
+const money=n=>(Number(n)||0).toLocaleString('vi-VN')+'đ';
+let menu=JSON.parse(localStorage.getItem('bidaMenu')||'null')||defaults.map((x,i)=>({id:i+1,name:x[0],price:x[1]}));
+let orders=[],nextId=1;
+const $=id=>document.getElementById(id);
+function saveMenu(){localStorage.setItem('bidaMenu',JSON.stringify(menu))}
+function timeOptions(){let s='';for(let h=0;h<24;h++)for(let m=0;m<60;m++){let v=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');s+=`<option value="${v}">${v}</option>`}return s}
+$('start').innerHTML=timeOptions();$('end').innerHTML=timeOptions();$('start').value='18:00';$('end').value='19:00';
+function duration(){let a=$('start').value.split(':').reduce((x,v)=>x*60+ +v,0),b=$('end').value.split(':').reduce((x,v)=>x*60+ +v,0);return b<a?b+1440-a:b-a}
+function totals(){let mins=duration(),table=Math.round(mins*(Number($('rate').value)||0)/60),drinks=orders.reduce((s,o)=>s+o.price*o.qty,0),sub=table+drinks,disc=Math.min(sub,Math.max(0,Number($('discount').value)||0));return {mins,table,drinks,disc,total:sub-disc}}
+function update(){
+let t=totals();$('duration').textContent=Math.floor(t.mins/60)+' giờ '+t.mins%60+' phút';$('tableCost').textContent=money(t.table);$('tableLine').textContent=money(t.table);$('drinkLine').textContent=money(t.drinks);$('discountLine').textContent='-'+money(t.disc);$('grandTotal').textContent=money(t.total);$('drinkTotal').textContent=money(t.drinks);
+$('orderList').innerHTML=orders.length?orders.map(o=>`<div class="item"><div><b>${esc(o.name)}</b><small>${money(o.price)} × ${o.qty}</small></div><b>${money(o.price*o.qty)}</b><button class="danger" onclick="removeOrder(${o.id})">Xóa</button></div>`).join(''):'<p class="muted">Chưa có món nước nào.</p>';
+renderReceipt();
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function removeOrder(id){orders=orders.filter(o=>o.id!==id);update()}
+function renderMenu(){
+let opts=menu.map(d=>`<option value="${d.id}">${esc(d.name)} – ${money(d.price)}</option>`).join('');
+$('drinkSelect').innerHTML=opts;$('editSelect').innerHTML=opts;$('menuCount').textContent=`(${menu.length} món)`;
+$('menuList').innerHTML=menu.map(d=>`<div class="menu-row"><span>${esc(d.name)}</span><b>${money(d.price)}</b><button class="soft" onclick="selectEdit(${d.id})">Sửa</button></div>`).join('')||'<p class="muted">Menu chưa có món.</p>';
+if(menu.length)selectEdit(Number($('editSelect').value)||menu[0].id);
+}
+function selectEdit(id){let d=menu.find(x=>x.id===id);if(!d)return;$('editSelect').value=d.id;$('editName').value=d.name;$('editPrice').value=d.price}
+function renderReceipt(){
+let t=totals();let lines=orders.length?orders.map(o=>`${o.name} x${o.qty} = ${money(o.price*o.qty)}`).join('\n'):'Không có';
+$('receiptText').textContent=`       HÓA ĐƠN THANH TOÁN BIDA
+--------------------------------
+Giờ bắt đầu: ${$('start').value}
+Giờ kết thúc: ${$('end').value}
+Thời gian chơi: ${Math.floor(t.mins/60)} giờ ${t.mins%60} phút
+Giá bàn: ${money($('rate').value)}/giờ
+Tiền bàn: ${money(t.table)}
+
+NƯỚC UỐNG:
+${lines}
+Tiền nước: ${money(t.drinks)}
+Giảm giá: -${money(t.disc)}
+--------------------------------
+TỔNG THANH TOÁN: ${money(t.total)}
+--------------------------------`;
+}
+function showTab(tab){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===tab));if(tab==='receipt')renderReceipt()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+['start','end','rate','discount'].forEach(id=>$(id).addEventListener('input',update));
+$('addDrink').onclick=()=>{let d=menu.find(x=>x.id===Number($('drinkSelect').value)),q=Number($('qty').value);if(!d||!Number.isInteger(q)||q<1)return;orders.push({id:nextId++,name:d.name,price:d.price,qty:q});$('qty').value=1;update()};
+$('addMenu').onclick=()=>{let name=$('newName').value.trim(),price=Number($('newPrice').value);if(!name||$('newPrice').value===''||price<0)return;menu.push({id:Math.max(0,...menu.map(x=>x.id))+1,name,price});$('newName').value='';$('newPrice').value=10000;saveMenu();renderMenu();update()};
+$('editSelect').onchange=()=>selectEdit(Number($('editSelect').value));
+$('saveEdit').onclick=()=>{let d=menu.find(x=>x.id===Number($('editSelect').value)),name=$('editName').value.trim(),price=Number($('editPrice').value);if(!d||!name||$('editPrice').value===''||price<0)return;d.name=name;d.price=price;saveMenu();renderMenu();update()};
+$('deleteMenu').onclick=()=>{let id=Number($('editSelect').value);if(!id)return;if(!confirm('Xóa món nước này khỏi menu?'))return;menu=menu.filter(x=>x.id!==id);saveMenu();renderMenu();update()};
+$('copyReceipt').onclick=async()=>{try{await navigator.clipboard.writeText($('receiptText').textContent);$('copyReceipt').textContent='✓ Đã sao chép';setTimeout(()=>$('copyReceipt').textContent='📋 Sao chép hóa đơn',1600)}catch(e){alert('Trình duyệt không cho phép sao chép tự động. Hãy chọn và sao chép nội dung hóa đơn.')}};
+$('reset').onclick=()=>{if(!confirm('Làm mới hóa đơn hiện tại?'))return;$('start').value='18:00';$('end').value='19:00';$('rate').value=25000;$('discount').value=0;orders=[];$('qty').value=1;update();showTab('bill')};
+renderMenu();update();
+</script>
+</body>
+</html>
